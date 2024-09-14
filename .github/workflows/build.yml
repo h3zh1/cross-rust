@@ -1,0 +1,95 @@
+name: build-docker-image
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Targets to build'
+        required: true
+        default: 'all'
+      tag:
+        description: 'Tag for the image'
+        required: false
+        default: 'latest'
+
+
+jobs:
+  set-matrix:
+    runs-on: ubuntu-22.04
+    outputs:
+      dockerfiles: ${{ steps.set_matrix.outputs.dockerfiles_json }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse and Find Dockerfiles for Targets
+        id: set_matrix
+        run: |
+          TARGETS="${{ github.event.inputs.targets }}"
+          if [ "$TARGETS" = "all" ]; then
+            DOCKERFILES=$(find Dockerfiles -name 'Dockerfile.*')
+          else
+            IFS=',' read -r -a TARGET_ARRAY <<< "$TARGETS"
+            DOCKERFILES=()
+            for TARGET in "${TARGET_ARRAY[@]}"; do
+              FILES=$(find Dockerfiles/*/*/*$TARGET -name 'Dockerfile.*')
+              if [ -n "$FILES" ]; then
+                DOCKERFILES+=($FILES)
+              fi
+            done
+          fi
+          # convert array to json
+          DOCKERFILES_JSON=$(printf '%s\n' "${DOCKERFILES[@]}" | jq -R . | jq -sc .)
+          echo "dockerfiles_json=$DOCKERFILES_JSON" >> $GITHUB_OUTPUT
+  build:
+    needs: set-matrix
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    strategy:
+      matrix:
+        dockerfile: ${{fromJson(needs.set-matrix.outputs.dockerfiles)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Chmod +x for script
+        run: chmod -R +x script/
+
+      - name: Build cross-base
+        run: |
+          docker build -t cross-base:latest -f Dockerfiles/Dockerfile.cross-base .
+
+      - name: Generate image name
+        run: |
+          DOCKERFILE=${{ matrix.dockerfile }}
+          IMAGE_NAME=$(basename $DOCKERFILE | sed 's#Dockerfile.##'):${{ github.event.inputs.tag }}
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Build Image
+        run: |
+          docker build -t $IMAGE_NAME -f $DOCKERFILE .
+
+      - name: Push to ghcr.io
+        run: |
+          docker tag ${{ env.IMAGE_NAME }} ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ env.IMAGE_NAME }}
+          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ env.IMAGE_NAME }}
+
+      - name: Push to DockerHub
+        run: |
+          docker tag ${{ env.IMAGE_NAME }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}

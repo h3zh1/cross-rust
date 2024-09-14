@@ -1,0 +1,24 @@
+FROM cross-base:latest as x86_64-apple-darwin-cross
+# `MACOS_SDK_URL` or `MACOS_SDK_FILE` must be provided. `MACOS_SDK_FILE`
+# is the filename, while `MACOS_SDK_DIR` is the path relative to the current
+# build context. We will copy the filename from the root directory to
+# osxcross.
+ARG MACOS_SDK_DIR="."
+ARG MACOS_SDK_FILE="nonexistent"
+ARG MACOS_SDK_URL="https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz"
+# wildcard workaround so we can copy the file only if it exists
+COPY $MACOS_SDK_DIR/$MACOS_SDK_FILE* /
+COPY script/darwin/*.sh /
+RUN /darwin.sh
+RUN /darwin-symlink.sh
+ENTRYPOINT ["/darwin-entry.sh"]
+RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+WORKDIR /root/src
+
+ARG TARGET=x86_64-apple-darwin
+RUN rustup target add $TARGET
+ENV CROSS_SYSROOT=/opt/osxcross/SDK/latest/usr
+ENV PATH=$PATH:/opt/osxcross/bin \
+    CROSS_TARGET=$TARGET
+
+
