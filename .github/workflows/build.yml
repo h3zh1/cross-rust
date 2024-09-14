@@ -82,7 +82,7 @@ jobs:
 
       - name: Build Image
         run: |
-          docker build -t $IMAGE_NAME -f $DOCKERFILE .
+          docker build -t ${{ env.IMAGE_NAME }} -f ${{ matrix.dockerfile }} .
 
       - name: Push to ghcr.io
         run: |
