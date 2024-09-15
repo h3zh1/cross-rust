@@ -25,14 +25,13 @@ jobs:
         id: set_targets
         run: |
           TARGETS="${{ github.event.inputs.targets }}"
-          TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
-          echo "targets_json=$TARGETS_JSON" >> $GITHUB_OUTPUT
-          
           if [[ "$TARGETS" == "all" ]]; then
             # Find all Dockerfile paths and extract the architecture part (e.g., aarch64-apple-darwin)
             TARGETS=$(find Dockerfiles -type f -name 'Dockerfile.*' | sed -E 's|.*/Dockerfile\.||' | paste -sd ',')
           fi
-          echo "targets_json=$TARGETS" >> $GITHUB_OUTPUT
+          TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
+          echo "targets_json=$TARGETS_JSON" >> $GITHUB_OUTPUT
+  
 
   build:
     needs: set_matrix
