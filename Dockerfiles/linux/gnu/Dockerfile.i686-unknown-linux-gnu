@@ -1,4 +1,5 @@
-FROM cross-base:latest as i686-unknown-linux-gnu-cross
+FROM cross-base:latest as build
+LABEL org.opencontainers.image.source=https://github.com/h3zh1/cross-rust
 
 RUN apt update && apt install -y --no-install-recommends \
     g++-i686-linux-gnu \

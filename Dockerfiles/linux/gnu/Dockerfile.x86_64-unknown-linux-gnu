@@ -1,5 +1,5 @@
-FROM cross-base:latest as x86_64-unknown-linux-gnu-cross
-
+FROM cross-base:latest as build
+LABEL org.opencontainers.image.source=https://github.com/h3zh1/cross-rust
 # gfortran-x86-64-linux-gnu is not need
 RUN apt update && apt install -y --no-install-recommends \
     g++-x86-64-linux-gnu \

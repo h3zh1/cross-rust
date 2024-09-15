@@ -13,40 +13,34 @@ on:
 
 
 jobs:
-  set-matrix:
+  set_matrix:
     runs-on: ubuntu-22.04
     outputs:
-      dockerfiles: ${{ steps.set_matrix.outputs.dockerfiles_json }}
+      targets_json: ${{ steps.set_targets.outputs.targets_json }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Parse and Find Dockerfiles for Targets
-        id: set_matrix
+        id: set_targets
         run: |
           TARGETS="${{ github.event.inputs.targets }}"
-          if [ "$TARGETS" = "all" ]; then
-            DOCKERFILES=$(find Dockerfiles -name 'Dockerfile.*')
-          else
-            IFS=',' read -r -a TARGET_ARRAY <<< "$TARGETS"
-            DOCKERFILES=()
-            for TARGET in "${TARGET_ARRAY[@]}"; do
-              FILES=$(find Dockerfiles/*/*/*$TARGET -name 'Dockerfile.*')
-              if [ -n "$FILES" ]; then
-                DOCKERFILES+=($FILES)
-              fi
-            done
+          TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
+          echo "targets_json=$TARGETS_JSON" >> $GITHUB_OUTPUT
+          
+          if [[ "$TARGETS" == "all" ]]; then
+            # Find all Dockerfile paths and extract the architecture part (e.g., aarch64-apple-darwin)
+            TARGETS=$(find Dockerfiles -type f -name 'Dockerfile.*' | sed -E 's|.*/Dockerfile\.||' | paste -sd ',')
           fi
-          # convert array to json
-          DOCKERFILES_JSON=$(printf '%s\n' "${DOCKERFILES[@]}" | jq -R . | jq -sc .)
-          echo "dockerfiles_json=$DOCKERFILES_JSON" >> $GITHUB_OUTPUT
+          echo "targets_json=$TARGETS" >> $GITHUB_OUTPUT
+
   build:
-    needs: set-matrix
+    needs: set_matrix
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:
       matrix:
-        dockerfile: ${{fromJson(needs.set-matrix.outputs.dockerfiles)}}
+        target: ${{ fromJson(needs.set_matrix.outputs.targets_json) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,19 +64,20 @@ jobs:
       - name: Chmod +x for script
         run: chmod -R +x script/
 
-      - name: Build cross-base
+      - name: Build Base Image
         run: |
           docker build -t cross-base:latest -f Dockerfiles/Dockerfile.cross-base .
 
       - name: Generate image name
         run: |
-          DOCKERFILE=${{ matrix.dockerfile }}
-          IMAGE_NAME=$(basename $DOCKERFILE | sed 's#Dockerfile.##'):${{ github.event.inputs.tag }}
+          IMAGE_NAME=${{ matrix.target }}:${{ github.event.inputs.tag }}
+          DOCKERFILE=$(find Dockerfiles/*/*/*${{ matrix.target }} -name 'Dockerfile.*')
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "DOCKERFILE=$DOCKERFILE" >> $GITHUB_ENV
 
-      - name: Build Image
+      - name: Build (${{ matrix.target }})
         run: |
-          docker build -t ${{ env.IMAGE_NAME }} -f ${{ matrix.dockerfile }} .
+          docker build -t ${{ env.IMAGE_NAME }} -f ${{ env.DOCKERFILE }} .
 
       - name: Push to ghcr.io
         run: |

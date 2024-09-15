@@ -1,4 +1,5 @@
-FROM cross-base:latest as i686-apple-darwin-cross
+FROM cross-base:latest as build
+LABEL org.opencontainers.image.source=https://github.com/h3zh1/cross-rust
 # `MACOS_SDK_URL` or `MACOS_SDK_FILE` must be provided. `MACOS_SDK_FILE`
 # is the filename, while `MACOS_SDK_DIR` is the path relative to the current
 # build context. We will copy the filename from the root directory to

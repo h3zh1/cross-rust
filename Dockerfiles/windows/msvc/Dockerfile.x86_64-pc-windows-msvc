@@ -1,4 +1,5 @@
-FROM cross-base:latest as x86_64-pc-windows-msvc-cross
+FROM cross-base:latest as build
+LABEL org.opencontainers.image.source=https://github.com/h3zh1/cross-rust
 
 # run these in separate steps, so we can cache MSVC between all images.
 COPY script/windows/msvc/*.sh /
