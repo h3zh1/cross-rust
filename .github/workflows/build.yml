@@ -27,7 +27,7 @@ jobs:
           TARGETS="${{ github.event.inputs.targets }}"
           if [[ "$TARGETS" == "all" ]]; then
             # Find all Dockerfile paths and extract the architecture part (e.g., aarch64-apple-darwin)
-            TARGETS=$(find Dockerfiles -type f -name 'Dockerfile.*' | sed -E 's|.*/Dockerfile\.||' | paste -sd ',')
+            TARGETS=$(find Dockerfiles -type f -name 'Dockerfile.*' | grep -v 'Dockerfile.cross-base' | sed -E 's|.*/Dockerfile\.||' | paste -sd ',')
           fi
           TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
           echo "targets_json=$TARGETS_JSON" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build Base Image
         run: |
-          docker build -t cross-base:latest -f Dockerfiles/Dockerfile.cross-base .
+          docker build --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" -t cross-base:latest -f Dockerfiles/Dockerfile.cross-base .
 
       - name: Generate image name
         run: |
