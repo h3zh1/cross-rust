@@ -15,7 +15,7 @@ RUN apt install -y --no-install-recommends \
 RUN mkdir -p /usr/lib/binfmt-support/ && \
     rm -f /usr/lib/binfmt-support/run-detectors /usr/bin/run-detectors && \
     ln -s /usr/bin/wine /usr/lib/binfmt-support/run-detectors && \
-    ln -s /usr/bin/wine /usr/bin/run-detectors \
+    ln -s /usr/bin/wine /usr/bin/run-detectors
 
 ENTRYPOINT ["/msvc-windows-entry.sh"]
 RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
