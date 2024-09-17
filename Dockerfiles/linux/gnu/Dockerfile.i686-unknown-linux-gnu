@@ -1,5 +1,4 @@
-FROM cross-base:latest as build
-
+FROM ubuntu:20.04 as cross-base
 
 RUN apt update && apt install -y --no-install-recommends \
     g++-i686-linux-gnu \
@@ -22,8 +21,6 @@ RUN /linux-image.sh i686
 
 COPY script/linux-runner script/base-runner.sh /
 COPY script/toolchain.cmake /opt/toolchain.cmake
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
-WORKDIR /root/src
 
 ENV CROSS_TOOLCHAIN_PREFIX=i686-linux-gnu-
 ENV CROSS_SYSROOT=/usr/i686-linux-gnu
@@ -45,5 +42,15 @@ ENV CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
     CROSS_CMAKE_OBJECT_FLAGS="-ffunction-sections -fdata-sections -fPIC -m32 -march=i686"
 
 RUN sed -e "s#@DEFAULT_QEMU_LD_PREFIX@#$QEMU_LD_PREFIX#g" -i /linux-runner
-RUN rustup target add i686-unknown-linux-gnu
 
+FROM cross-base as build
+
+ARG TOOLCHAIN_VERSION
+ENV RUSTUP_HOME=/root/rustup
+ENV CARGO_HOME=/root/cargo
+COPY script/rust-and-xargo.sh /
+ENV PATH=$CARGO_HOME/bin:$PATH
+RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
+RUN rustup target add i686-unknown-linux-gnu
+RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+WORKDIR /root/src

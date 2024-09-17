@@ -1,6 +1,4 @@
-FROM cross-base:latest as build
-
-
+FROM ubuntu:20.04 as cross-base
 
 RUN dpkg --add-architecture i386 && apt update && apt install -y --no-install-recommends \
     libz-mingw-w64-dev
@@ -24,7 +22,6 @@ RUN mkdir -p /usr/lib/binfmt-support/ && \
     ln -s /usr/bin/wine /usr/bin/run-detectors
 
 ENTRYPOINT ["/windows-entry.sh"]
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
 COPY script/toolchain.cmake /opt/toolchain.cmake
 
@@ -46,5 +43,15 @@ ENV CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc"$CROSS_
     CROSS_CMAKE_CRT=gnu \
     CROSS_CMAKE_OBJECT_FLAGS="-ffunction-sections -fdata-sections -m32"
 
+
+FROM cross-base as build
+
+ARG TOOLCHAIN_VERSION
+ENV RUSTUP_HOME=/root/rustup
+ENV CARGO_HOME=/root/cargo
+COPY script/rust-and-xargo.sh /
+ENV PATH=$CARGO_HOME/bin:$PATH
+RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
 RUN rustup target add i686-pc-windows-gnu
+RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src

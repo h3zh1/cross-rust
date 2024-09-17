@@ -1,4 +1,4 @@
-FROM cross-base:latest as build
+FROM ubuntu:20.04 as cross-base
 
 # gfortran-x86-64-linux-gnu is not need
 RUN apt update && apt install -y --no-install-recommends \
@@ -21,8 +21,6 @@ RUN /linux-image.sh x86_64
 
 COPY script/linux-runner script/base-runner.sh /
 COPY script/toolchain.cmake /opt/toolchain.cmake
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
-WORKDIR /root/src
 
 ENV CROSS_TOOLCHAIN_PREFIX=x86_64-linux-gnu-
 ENV CROSS_SYSROOT=/usr/x86_64-linux-gnu
@@ -44,5 +42,14 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
     CROSS_CMAKE_OBJECT_FLAGS="-ffunction-sections -fdata-sections -fPIC -m64"
 
 RUN sed -e "s#@DEFAULT_QEMU_LD_PREFIX@#$QEMU_LD_PREFIX#g" -i /linux-runner
-RUN rustup target add x86_64-unknown-linux-gnu
+FROM cross-base as build
 
+ARG TOOLCHAIN_VERSION
+ENV RUSTUP_HOME=/root/rustup
+ENV CARGO_HOME=/root/cargo
+COPY script/rust-and-xargo.sh /
+ENV PATH=$CARGO_HOME/bin:$PATH
+RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
+RUN rustup target add x86_64-unknown-linux-gnu
+RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+WORKDIR /root/src

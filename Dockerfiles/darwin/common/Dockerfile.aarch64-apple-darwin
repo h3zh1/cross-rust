@@ -1,4 +1,4 @@
-FROM cross-base:latest as build
+FROM ubuntu:20.04 as cross-base
 
 # `MACOS_SDK_URL` or `MACOS_SDK_FILE` must be provided. `MACOS_SDK_FILE`
 # is the filename, while `MACOS_SDK_DIR` is the path relative to the current
@@ -13,13 +13,18 @@ COPY script/darwin/*.sh /
 RUN /darwin.sh
 RUN /darwin-symlink.sh
 ENTRYPOINT ["/darwin-entry.sh"]
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
-WORKDIR /root/src
-
-ARG TARGET=aarch64-apple-darwin
-RUN rustup target add $TARGET
 ENV CROSS_SYSROOT=/opt/osxcross/SDK/latest/usr
 ENV PATH=$PATH:/opt/osxcross/bin \
-    CROSS_TARGET=$TARGET
+    CROSS_TARGET=aarch64-apple-darwin
 
+FROM cross-base as build
 
+ARG TOOLCHAIN_VERSION
+ENV RUSTUP_HOME=/root/rustup
+ENV CARGO_HOME=/root/cargo
+COPY script/rust-and-xargo.sh /
+ENV PATH=$CARGO_HOME/bin:$PATH
+RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
+RUN rustup target add aarch64-apple-darwin
+RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+WORKDIR /root/src

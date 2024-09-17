@@ -1,16 +1,15 @@
 FROM ubuntu:20.04 as cross-base
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG TOOLCHAIN_VERSION=nightly-2024-08-16
-ENV RUSTUP_HOME=/root/rustup
-ENV CARGO_HOME=/root/cargo
-
 COPY script/common.sh script/lib.sh /
 RUN /common.sh
 
 COPY script/cmake.sh /
 RUN /cmake.sh
 
+ARG TOOLCHAIN_VERSION
+ENV RUSTUP_HOME=/root/rustup
+ENV CARGO_HOME=/root/cargo
 COPY script/rust-and-xargo.sh /
 ENV PATH=$CARGO_HOME/bin:$PATH
 RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}

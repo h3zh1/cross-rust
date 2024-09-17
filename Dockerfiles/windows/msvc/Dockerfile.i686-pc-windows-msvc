@@ -1,4 +1,4 @@
-FROM cross-base:latest as build
+FROM ubuntu:20.04 as cross-base
 
 
 # run these in separate steps, so we can cache MSVC between all images.
@@ -14,20 +14,13 @@ RUN /perl.sh
 
 ARG ARCH=x86
 RUN /msvc-wine-symlink.sh $ARCH
-
-# run-detectors are responsible for calling the correct interpreter for exe
-# files. For some reason it does not work inside a docker container (it works
-# fine in the host). So we replace the usual paths of run-detectors to run wine
-# directly. This only affects the guest, we are not messing up with the host.
-#
-# See /usr/share/doc/binfmt-support/detectors
 RUN mkdir -p /usr/lib/binfmt-support/ && \
     rm -f /usr/lib/binfmt-support/run-detectors /usr/bin/run-detectors && \
     ln -s /usr/bin/wine /usr/lib/binfmt-support/run-detectors && \
     ln -s /usr/bin/wine /usr/bin/run-detectors
 
 ENTRYPOINT ["/msvc-windows-entry.sh"]
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
 
 ENV CROSS_SYSROOT=/opt/msvc/vc/tools/msvc/latest
 ENV CARGO_TARGET_I686_PC_WINDOWS_MSVC_LINKER=link.exe \
@@ -40,4 +33,14 @@ ENV CARGO_TARGET_I686_PC_WINDOWS_MSVC_LINKER=link.exe \
     VCINSTALLDIR="/opt/msvc/vc" \
     VSCMD_ARG_TGT_ARCH=$ARCH
 
+FROM cross-base as build
+
+ARG TOOLCHAIN_VERSION
+ENV RUSTUP_HOME=/root/rustup
+ENV CARGO_HOME=/root/cargo
+COPY script/rust-and-xargo.sh /
+ENV PATH=$CARGO_HOME/bin:$PATH
+RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
+RUN rustup target add i686-pc-windows-msvc
+RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src
