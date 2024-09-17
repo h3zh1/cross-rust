@@ -24,7 +24,7 @@ RUN mkdir -p /usr/lib/binfmt-support/ && \
     ln -s /usr/bin/wine /usr/lib/binfmt-support/run-detectors && \
     ln -s /usr/bin/wine /usr/bin/run-detectors \
 
-ENTRYPOINT ["/msvc-windows-entry.sh"]
+ENTRYPOINT ["/windows-entry.sh"]
 
 COPY script/toolchain.cmake /opt/toolchain.cmake
 

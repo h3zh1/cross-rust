@@ -8,7 +8,6 @@ RUN /common.sh
 COPY script/cmake.sh /
 RUN /cmake.sh
 
-
 # run these in separate steps, so we can cache MSVC between all images.
 COPY script/windows/msvc/*.sh /
 RUN /msvc-wine.sh
@@ -28,7 +27,6 @@ RUN mkdir -p /usr/lib/binfmt-support/ && \
     ln -s /usr/bin/wine /usr/bin/run-detectors
 
 ENTRYPOINT ["/msvc-windows-entry.sh"]
-
 
 ENV CROSS_SYSROOT=/opt/msvc/vc/tools/msvc/latest
 ENV CARGO_TARGET_I686_PC_WINDOWS_MSVC_LINKER=link.exe \
