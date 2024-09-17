@@ -1,4 +1,5 @@
 FROM ubuntu:20.04 as cross-base
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY script/common.sh script/lib.sh /
@@ -6,6 +7,7 @@ RUN /common.sh
 
 COPY script/cmake.sh /
 RUN /cmake.sh
+
 
 ARG TOOLCHAIN_VERSION
 ENV RUSTUP_HOME=/root/rustup

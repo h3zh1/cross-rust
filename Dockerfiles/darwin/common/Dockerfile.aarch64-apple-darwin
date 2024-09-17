@@ -1,11 +1,19 @@
 FROM ubuntu:20.04 as cross-base
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY script/common.sh script/lib.sh /
+RUN /common.sh
+
+COPY script/cmake.sh /
+RUN /cmake.sh
+
 # `MACOS_SDK_URL` or `MACOS_SDK_FILE` must be provided. `MACOS_SDK_FILE`
 # is the filename, while `MACOS_SDK_DIR` is the path relative to the current
 # build context. We will copy the filename from the root directory to
 # osxcross.
 ARG MACOS_SDK_DIR="."
-ARG MACOS_SDK_FILE="nonexistent"
+ARG MACsssssOS_SDK_FILE="nonexistent"
 ARG MACOS_SDK_URL="https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz"
 # wildcard workaround so we can copy the file only if it exists
 COPY $MACOS_SDK_DIR/$MACOS_SDK_FILE* /

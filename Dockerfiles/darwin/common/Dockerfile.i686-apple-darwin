@@ -1,5 +1,13 @@
 FROM ubuntu:20.04 as cross-base
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY script/common.sh script/lib.sh /
+RUN /common.sh
+
+COPY script/cmake.sh /
+RUN /cmake.sh
+
 # `MACOS_SDK_URL` or `MACOS_SDK_FILE` must be provided. `MACOS_SDK_FILE`
 # is the filename, while `MACOS_SDK_DIR` is the path relative to the current
 # build context. We will copy the filename from the root directory to

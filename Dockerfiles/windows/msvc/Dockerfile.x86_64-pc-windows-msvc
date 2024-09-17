@@ -1,5 +1,13 @@
 FROM ubuntu:20.04 as cross-base
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY script/common.sh script/lib.sh /
+RUN /common.sh
+
+COPY script/cmake.sh /
+RUN /cmake.sh
+
 # run these in separate steps, so we can cache MSVC between all images.
 COPY script/windows/msvc/*.sh /
 RUN /msvc-wine.sh
