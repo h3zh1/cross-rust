@@ -10,7 +10,10 @@ on:
         description: 'Tool chain version'
         required: false
         default: 'stable'
-
+      remark:
+        description: 'remark'
+        required: false
+        default: '-beta'
 
 jobs:
   build:
@@ -119,7 +122,7 @@ jobs:
           TARGETS=$(echo $TARGETS_JSON | jq -r '.[]')
           for TARGET in $TARGETS; do
             echo "building for $TARGET"
-            IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}
+            IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}${{ github.event.inputs.remark }}
             DOCKERFILE=$(find Dockerfiles/*/*/*$TARGET -name 'Dockerfile.*')
             # build the docker image
             docker build \
@@ -135,7 +138,7 @@ jobs:
           echo "Starting push to docker hub and ghcr"
           echo "=============================================================================="
           for TARGET in $TARGETS; do
-            IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}
+            IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}${{ github.event.inputs.remark }}
             docker tag $IMAGE_NAME ghcr.io/${{ secrets.GHCR_USERNAME }}/$IMAGE_NAME
             docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/$IMAGE_NAME
             docker tag $IMAGE_NAME ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME
