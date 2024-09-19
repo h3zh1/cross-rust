@@ -13,7 +13,7 @@ RUN /cmake.sh
 # build context. We will copy the filename from the root directory to
 # osxcross.
 ARG MACOS_SDK_DIR="."
-ARG MACsssssOS_SDK_FILE="nonexistent"
+ARG MACOS_SDK_FILE="nonexistent"
 ARG MACOS_SDK_URL="https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz"
 # wildcard workaround so we can copy the file only if it exists
 COPY $MACOS_SDK_DIR/$MACOS_SDK_FILE* /

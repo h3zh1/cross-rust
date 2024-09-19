@@ -1,0 +1,146 @@
+name: build--and-cache-docker-image
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Targets to build'
+        required: true
+        default: 'all'
+      tool_chain_version:
+        description: 'Tool chain version'
+        required: false
+        default: 'stable'
+
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    steps:
+      - name: Before freeing up disk space
+        run: |
+          echo "Before freeing up disk space"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="
+
+      - name: "Optimize Disk Space"
+        uses: "hugoalh/disk-space-optimizer-ghaction@v0.8.1"
+        with:
+          operate_sudo: "True"
+          general_include: ".+"
+          general_exclude: |-
+            ^GCC$
+            ^G\+\+$
+            Clang
+            LLVM
+          apt_prune: "True"
+          apt_clean: "True"
+          homebrew_prune: "True"
+          homebrew_clean: "True"
+          npm_prune: "True"
+          npm_clean: "True"
+          os_swap: "True"
+
+      - name: Freeing up disk space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 2048
+          swap-size-mb: 1
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
+
+      - name: Free up disk space complete
+        run: |
+          echo "Free up disk space complete"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="
+
+      - name: Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+          bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
+          git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
+          libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz \
+          mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
+          libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
+          vim wget xmlto xxd zlib1g-dev python3-setuptools
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/local/lib/android /opt/ghc /usr/share/dotnet /usr/local/graalvm /usr/local/.ghcup \
+          /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/node_modules
+          sudo timedatectl set-timezone "$TZ"
+          sudo chown $USER:$GROUPS $GITHUB_WORKSPACE
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Chmod +x for script
+        run: chmod -R +x script/
+
+      - name: Parse and Find Dockerfiles for Targets
+        id: set_targets
+        run: |
+          TARGETS="${{ github.event.inputs.targets }}"
+          if [[ "$TARGETS" == "all" ]]; then
+            # Find all Dockerfile paths and extract the architecture part (e.g., aarch64-apple-darwin)
+            TARGETS=$(find Dockerfiles -type f -name 'Dockerfile.*' | grep -v 'Dockerfile.cross-base' | sed -E 's|.*/Dockerfile\.||' | paste -sd ',')
+          fi
+          TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
+          echo "TARGETS_JSON=${TARGETS_JSON}" >> $GITHUB_ENV
+
+      - name: Generate Image name
+        run: |
+          echo "Starting build All targets"
+          echo "=============================================================================="
+          TARGETS=$(echo $TARGETS_JSON | jq -r '.[]')
+          for TARGET in $TARGETS; do
+            echo "building for $TARGET"
+            IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}
+            DOCKERFILE=$(find Dockerfiles/*/*/*$TARGET -name 'Dockerfile.*')
+            # build the docker image
+            docker build \
+              --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
+              --build-arg TOOLCHAIN_VERSION=${{ github.event.inputs.tool_chain_version }} \
+              -t $IMAGE_NAME \
+              -f $DOCKERFILE . || echo "$TARGET build failed, continuing..."
+            echo "$TARGET has been built"
+          done
+          echo "=============================================================================="
+          echo "All targets have been built"
+          echo "=============================================================================="
+          echo "Starting push to docker hub and ghcr"
+          echo "=============================================================================="
+          for TARGET in $TARGETS; do
+            IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}
+            docker tag $IMAGE_NAME ghcr.io/${{ secrets.GHCR_USERNAME }}/$IMAGE_NAME
+            docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/$IMAGE_NAME
+            docker tag $IMAGE_NAME ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME
+          done
+          echo "=============================================================================="
+          echo "All targets have been pushed to docker hub and ghcr"
+          
