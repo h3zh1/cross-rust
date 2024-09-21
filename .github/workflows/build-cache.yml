@@ -101,7 +101,7 @@ jobs:
             TARGETS=$(echo $TARGETS_JSON | jq -r '.[]')
             for TARGET in $TARGETS; do
                 CACHE_IMAGE_NAME=ghcr.io/${{ secrets.GHCR_USERNAME }}/$TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}}
-                docker pull $CACHE_IMAGE_NAME || echo "$CACHE_IMAGE_NAME pre pull failed, continuing..."
+                docker pull $CACHE_IMAGE_NAME
             done
             echo "=============================================================================="
             echo "Pre pull for cache complete"
@@ -113,13 +113,14 @@ jobs:
           TARGETS=$(echo $TARGETS_JSON | jq -r '.[]')
           for TARGET in $TARGETS; do
             echo "building for $TARGET"
+            CACHE_IMAGE_NAME=ghcr.io/${{ secrets.GHCR_USERNAME }}/$TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}}
             IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}${{ github.event.inputs.remark }}
             DOCKERFILE=$(find Dockerfiles/*/*/*$TARGET -name 'Dockerfile.*')
             # build the docker image
             docker build \
               --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
               --build-arg TOOLCHAIN_VERSION=${{ github.event.inputs.tool_chain_version }} \
-              --cache-from $TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}} \
+              --cache-from $CACHE_IMAGE_NAME \
               -t $IMAGE_NAME \
               -f $DOCKERFILE . || echo "$TARGET build failed, continuing..."
             echo "$TARGET has been built"
