@@ -62,3 +62,4 @@ RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
 RUN rustup target add i686-unknown-linux-gnu
 RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src
+RUN cargo install --force cargo-make

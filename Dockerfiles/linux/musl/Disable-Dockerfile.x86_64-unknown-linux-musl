@@ -40,3 +40,4 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
 
 RUN sed -e "s#@DEFAULT_QEMU_LD_PREFIX@#$QEMU_LD_PREFIX#g" -i /qemu-runner
 WORKDIR /root/src
+RUN cargo install --force cargo-make

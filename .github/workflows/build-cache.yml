@@ -1,4 +1,4 @@
-name: build-and-cache-docker-image
+name: build-from-cache
 on:
   workflow_dispatch:
     inputs:
@@ -14,6 +14,10 @@ on:
         description: 'remark'
         required: false
         default: '-beta'
+      cache_tag:
+        description: 'cache-tag'
+        required: false
+        default: '-base'
 
 jobs:
   build:
@@ -89,6 +93,19 @@ jobs:
           TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
           echo "TARGETS_JSON=${TARGETS_JSON}" >> $GITHUB_ENV
 
+      - name: Pre pull image for cache
+        id: pre_pull
+        run: |
+            echo "Starting pre pull for cache"
+            echo "=============================================================================="
+            TARGETS=$(echo $TARGETS_JSON | jq -r '.[]')
+            for TARGET in $TARGETS; do
+                IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}}
+                docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/$IMAGE_NAME || echo "$TARGET pre pull failed, continuing..."
+            done
+            echo "=============================================================================="
+            echo "Pre pull for cache complete"
+
       - name: Build and Push
         run: |
           echo "Starting build All targets"
@@ -102,6 +119,7 @@ jobs:
             docker build \
               --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
               --build-arg TOOLCHAIN_VERSION=${{ github.event.inputs.tool_chain_version }} \
+              --cache-from $TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}} \
               -t $IMAGE_NAME \
               -f $DOCKERFILE . || echo "$TARGET build failed, continuing..."
             echo "$TARGET has been built"
