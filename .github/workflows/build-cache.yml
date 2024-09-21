@@ -100,8 +100,8 @@ jobs:
             echo "=============================================================================="
             TARGETS=$(echo $TARGETS_JSON | jq -r '.[]')
             for TARGET in $TARGETS; do
-                IMAGE_NAME=$TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}}
-                docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/$IMAGE_NAME || echo "$TARGET pre pull failed, continuing..."
+                CACHE_IMAGE_NAME=ghcr.io/${{ secrets.GHCR_USERNAME }}/$TARGET:${{ github.event.inputs.tool_chain_version }}${{github.event.inputs.cache_tag}}
+                docker pull $CACHE_IMAGE_NAME || echo "$CACHE_IMAGE_NAME pre pull failed, continuing..."
             done
             echo "=============================================================================="
             echo "Pre pull for cache complete"
