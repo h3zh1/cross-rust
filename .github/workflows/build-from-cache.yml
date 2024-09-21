@@ -1,4 +1,4 @@
-name: build-and-cache-docker-image
+name: build-from-cache
 on:
   workflow_dispatch:
     inputs:
