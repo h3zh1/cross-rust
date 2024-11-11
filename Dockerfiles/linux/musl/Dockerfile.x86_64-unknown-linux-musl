@@ -8,7 +8,7 @@ RUN /qemu.sh x86_64
 
 ENV CROSS_TOOLCHAIN_PREFIX=x86_64-linux-musl-
 ENV CROSS_SYSROOT=/usr/local/x86_64-linux-musl
-COPY musl-symlink.sh /
+COPY script/musl-symlink.sh /
 RUN /musl-symlink.sh $CROSS_SYSROOT x86_64
 
 COPY script/qemu-runner script/base-runner.sh /
