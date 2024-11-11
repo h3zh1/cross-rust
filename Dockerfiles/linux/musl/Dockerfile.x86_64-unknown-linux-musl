@@ -1,6 +1,6 @@
 FROM rust-base
 
-COPY script/musl.sh /
+COPY script/musl/musl.sh /
 RUN /musl.sh TARGET=x86_64-linux-musl
 
 COPY script/qemu.sh /
