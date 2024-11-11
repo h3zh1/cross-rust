@@ -11,8 +11,8 @@ ENV CROSS_SYSROOT=/usr/local/x86_64-linux-musl
 COPY musl-symlink.sh /
 RUN /musl-symlink.sh $CROSS_SYSROOT x86_64
 
-COPY qemu-runner base-runner.sh /
-COPY toolchain.cmake /opt/toolchain.cmake
+COPY script/qemu-runner base-runner.sh /
+COPY script/toolchain.cmake /opt/toolchain.cmake
 
 ENV CROSS_TARGET_RUNNER="/qemu-runner x86_64"
 ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
