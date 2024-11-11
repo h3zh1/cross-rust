@@ -14,6 +14,10 @@ on:
         description: 'remark'
         required: false
         default: '-beta'
+      is_free_disk_space:
+        description: 'is_free_disk_space'
+        required: false
+        default: 'false'
 
 jobs:
   build:
@@ -33,6 +37,7 @@ jobs:
           echo "disk: $(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
 
       - name: Before freeing up disk space
+        if: ${{ github.event.inputs.is_free_disk_space == 'true' }}
         run: |
           echo "Before freeing up disk space"
           echo "=============================================================================="
@@ -40,6 +45,7 @@ jobs:
           echo "=============================================================================="
 
       - name: "Optimize Disk Space"
+        if: ${{ github.event.inputs.is_free_disk_space == 'true' }}
         run: |
           sudo rm -rf /usr/share/dotnet /etc/apt/sources.list.d /usr/local/lib/android $AGENT_TOOLSDIRECTORY
           sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* powershell openjdk* mongodb* moby* || true
@@ -50,6 +56,7 @@ jobs:
           sudo -E apt-get -y clean
 
       - name: Free up disk space complete
+        if: ${{ github.event.inputs.is_free_disk_space == 'true' }}
         run: |
           echo "Free up disk space complete"
           echo "=============================================================================="
