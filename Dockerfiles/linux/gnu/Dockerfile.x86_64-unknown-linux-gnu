@@ -1,17 +1,10 @@
-FROM ubuntu:20.04 as cross-base
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY script/common.sh script/lib.sh /
-RUN /common.sh
-
-COPY script/cmake.sh /
-RUN /cmake.sh
-
+FROM rust-base
 # gfortran-x86-64-linux-gnu is not need
 RUN apt update && apt install -y --no-install-recommends \
     g++-x86-64-linux-gnu \
-    libc6-dev-amd64-cross
+    libc6-dev-amd64-cross \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY script/deny-debian-packages.sh /
 RUN TARGET_ARCH=amd64 /deny-debian-packages.sh \

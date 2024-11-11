@@ -15,10 +15,7 @@ main() {
     sh rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain "${TOOLCHAIN_VERSION}"
     rm rustup-init.sh
 
-    cargo install xargo --root /usr/local
-
     purge_packages
-
     rm "${0}"
 }
 

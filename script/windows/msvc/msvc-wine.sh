@@ -29,7 +29,10 @@ main() {
     git checkout "${commit}"
     python3 vsdownload.py --accept-license --dest /opt/msvc
     ./install.sh /opt/msvc
-
+    # delete 
+    find /opt/ -name "*arm*" -exec rm -rf {} +
+    find /opt/ -name "*onecore*" -exec rm -rf {} +
+    
     python3 -m pip uninstall six --yes
     purge_packages
 
