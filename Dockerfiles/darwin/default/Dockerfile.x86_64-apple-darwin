@@ -17,16 +17,5 @@ ENV CROSS_SYSROOT=/opt/osxcross/SDK/latest/usr
 ENV PATH=$PATH:/opt/osxcross/bin \
     CROSS_TARGET=x86_64-apple-darwin
 
-
-FROM cross-base as build
-
-ARG TOOLCHAIN_VERSION
-ENV RUSTUP_HOME=/root/rustup
-ENV CARGO_HOME=/root/cargo
-COPY script/rust-and-xargo.sh /
-ENV PATH=$CARGO_HOME/bin:$PATH
-RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
 RUN rustup target add x86_64-apple-darwin
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src
-RUN cargo install --force cargo-make
