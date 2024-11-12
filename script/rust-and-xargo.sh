@@ -11,7 +11,7 @@ main() {
 
     TOOLCHAIN_VERSION=${1:-stable}
 
-    curl --retry 3 -sSfL https://sh.rustup.rs -o rustup-init.sh
+    curl --retry 4 -sSfL https://sh.rustup.rs -o rustup-init.sh
     sh rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain "${TOOLCHAIN_VERSION}"
     rm rustup-init.sh
 

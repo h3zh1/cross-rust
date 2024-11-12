@@ -87,7 +87,7 @@ jobs:
 
       - name: Pre build rust base
         run: |
-          docker build -t rust-base:latest -f Dockerfiles/Dockerfile.base .
+          docker build --build-arg TOOLCHAIN_VERSION=${{ github.event.inputs.tool_chain_version }} -t rust-base:latest -f Dockerfiles/Dockerfile.base .
 
       - name: Parse and Find Dockerfiles for Targets
         id: set_targets

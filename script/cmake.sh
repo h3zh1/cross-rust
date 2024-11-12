@@ -16,7 +16,7 @@ main() {
 
     pushd "${td}"
 
-    curl --retry 3 -sSfL "https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.sh" -o cmake.sh
+    curl --retry 4 -sSfL "https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.sh" -o cmake.sh
     sh cmake.sh --skip-license --prefix=/usr/local
 
     popd
