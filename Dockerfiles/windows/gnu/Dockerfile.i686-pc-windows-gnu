@@ -1,13 +1,5 @@
 FROM rust-base
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY script/common.sh script/lib.sh /
-RUN /common.sh
-
-COPY script/cmake.sh /
-RUN /cmake.sh
-
 RUN dpkg --add-architecture i386 \
     && apt update \
     && apt install -y --no-install-recommends libz-mingw-w64-dev \
