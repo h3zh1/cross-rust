@@ -77,6 +77,10 @@ jobs:
 
       - name: Chmod +x for script
         run: chmod -R +x script/
+      
+      - name: Pre build rust base
+        run: |
+          docker build -t rust-base:latest -f Dockerfiles/Dockerfile.base .
 
       - name: Parse and Find Dockerfiles for Targets
         id: set_targets

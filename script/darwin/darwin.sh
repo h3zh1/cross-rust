@@ -44,7 +44,7 @@ main() {
         cp /"${MACOS_SDK_FILE}" tarballs/
     else
         pushd tarballs
-        curl --retry 3 -sSfL "${MACOS_SDK_URL}" -O
+        curl --retry 4 -sSfL "${MACOS_SDK_URL}" -O
         popd
     fi
 

@@ -15,7 +15,7 @@ build_static_libffi () {
     pushd "${td}"
 
 
-    curl --retry 3 -sSfL "https://github.com/libffi/libffi/archive/refs/tags/v${version}.tar.gz" -O -L
+    curl --retry 4 -sSfL "https://github.com/libffi/libffi/archive/refs/tags/v${version}.tar.gz" -O -L
     tar --strip-components=1 -xzf "v${version}.tar.gz"
     ./configure --prefix="$td"/lib --disable-builddir --disable-shared --enable-static
     make "-j$(nproc)"
@@ -38,7 +38,7 @@ build_static_libmount () {
 
     pushd "${td}"
 
-    curl --retry 3 -sSfL "https://kernel.org/pub/linux/utils/util-linux/v${version}/util-linux-${version_spec}.tar.xz" -O -L
+    curl --retry 4 -sSfL "https://kernel.org/pub/linux/utils/util-linux/v${version}/util-linux-${version_spec}.tar.xz" -O -L
     tar --strip-components=1 -xJf "util-linux-${version_spec}.tar.xz"
     ./configure --disable-shared --enable-static --without-ncurses
     make "-j$(nproc)" mount blkid
@@ -61,7 +61,7 @@ build_static_libattr() {
     set_centos_ulimit
     yum install -y gettext
 
-    curl --retry 3 -sSfL "https://download.savannah.nongnu.org/releases/attr/attr-${version}.src.tar.gz" -O
+    curl --retry 4 -sSfL "https://download.savannah.nongnu.org/releases/attr/attr-${version}.src.tar.gz" -O
     tar --strip-components=1 -xzf "attr-${version}.src.tar.gz"
     cp /usr/share/automake*/config.* .
 
@@ -84,7 +84,7 @@ build_static_libcap() {
 
     pushd "${td}"
 
-    curl --retry 3 -sSfL "https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-${version}.tar.xz" -O
+    curl --retry 4 -sSfL "https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-${version}.tar.xz" -O
     tar --strip-components=1 -xJf "libcap-${version}.tar.xz"
     make "-j$(nproc)"
     install -m 644 libcap/libcap.a /usr/lib64/
@@ -102,7 +102,7 @@ build_static_pixman() {
 
     pushd "${td}"
 
-    curl --retry 3 -sSfL "https://www.cairographics.org/releases/pixman-${version}.tar.gz" -O
+    curl --retry 4 -sSfL "https://www.cairographics.org/releases/pixman-${version}.tar.gz" -O
     tar --strip-components=1 -xzf "pixman-${version}.tar.gz"
     ./configure
     make "-j$(nproc)"
@@ -121,7 +121,7 @@ build_static_slirp() {
 
     pushd "${td}"
 
-    curl --retry 3 -sSfL "https://gitlab.freedesktop.org/slirp/libslirp//-/archive/v${version}/libslirp-v${version}.tar.gz" -O
+    curl --retry 4 -sSfL "https://gitlab.freedesktop.org/slirp/libslirp//-/archive/v${version}/libslirp-v${version}.tar.gz" -O
     tar -xzf "libslirp-v${version}.tar.gz"
     meson setup -Ddefault_library=static libslirp-v${version} build
     ninja -C build
@@ -173,8 +173,8 @@ main() {
         zlib-devel \
         zlib-static
 
-    if_centos 'curl --retry 3 -sSfL "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -o /usr/share/automake*/config.guess'
-    if_centos 'curl --retry 3 -sSfL "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -o /usr/share/automake*/config.sub'
+    if_centos 'curl --retry 4 -sSfL "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -o /usr/share/automake*/config.guess'
+    if_centos 'curl --retry 4 -sSfL "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -o /usr/share/automake*/config.sub'
 
     # these are not packaged as static libraries in centos; build them manually
     if_centos build_static_libffi
@@ -221,7 +221,7 @@ main() {
 
     pushd "${td}"
 
-    curl --retry 3 -sSfL "https://download.qemu.org/qemu-${version}.tar.xz" -O
+    curl --retry 4 -sSfL "https://download.qemu.org/qemu-${version}.tar.xz" -O
     tar --strip-components=1 -xJf "qemu-${version}.tar.xz"
 
     local targets="${arch}-linux-user"

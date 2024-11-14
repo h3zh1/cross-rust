@@ -1,15 +1,10 @@
-FROM ubuntu:20.04 as cross-base
+FROM rust-base
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY script/common.sh script/lib.sh /
-RUN /common.sh
-
-COPY script/cmake.sh /
-RUN /cmake.sh
-
-RUN dpkg --add-architecture i386 && apt update && apt install -y --no-install-recommends \
-    libz-mingw-w64-dev
+RUN dpkg --add-architecture i386 \
+    && apt update \
+    && apt install -y --no-install-recommends libz-mingw-w64-dev \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY script/windows/*.sh /
 RUN /wine.sh
@@ -52,15 +47,5 @@ ENV CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc"$CROSS_
     CROSS_CMAKE_OBJECT_FLAGS="-ffunction-sections -fdata-sections -m32"
 
 
-FROM cross-base as build
-
-ARG TOOLCHAIN_VERSION
-ENV RUSTUP_HOME=/root/rustup
-ENV CARGO_HOME=/root/cargo
-COPY script/rust-and-xargo.sh /
-ENV PATH=$CARGO_HOME/bin:$PATH
-RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
 RUN rustup target add i686-pc-windows-gnu
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src
-RUN cargo install --force cargo-make

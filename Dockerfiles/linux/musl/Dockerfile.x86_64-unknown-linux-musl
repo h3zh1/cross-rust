@@ -1,15 +1,6 @@
-FROM ubuntu:20.04 as cross-base
+FROM rust-base
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY script/common.sh script/lib.sh /
-RUN /common.sh
-
-COPY script/cmake.sh /
-RUN /cmake.sh
-
-
-COPY musl.sh /
+COPY script/musl/musl.sh /
 RUN /musl.sh TARGET=x86_64-linux-musl
 
 COPY script/qemu.sh /
@@ -17,12 +8,11 @@ RUN /qemu.sh x86_64
 
 ENV CROSS_TOOLCHAIN_PREFIX=x86_64-linux-musl-
 ENV CROSS_SYSROOT=/usr/local/x86_64-linux-musl
-COPY musl-symlink.sh /
+COPY script/musl/musl-symlink.sh /
 RUN /musl-symlink.sh $CROSS_SYSROOT x86_64
 
-COPY qemu-runner base-runner.sh /
-COPY toolchain.cmake /opt/toolchain.cmake
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+COPY script/qemu-runner script/base-runner.sh /
+COPY script/toolchain.cmake /opt/toolchain.cmake
 
 ENV CROSS_TARGET_RUNNER="/qemu-runner x86_64"
 ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
@@ -39,5 +29,5 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
     CROSS_CMAKE_OBJECT_FLAGS="-ffunction-sections -fdata-sections -fPIC -m64"
 
 RUN sed -e "s#@DEFAULT_QEMU_LD_PREFIX@#$QEMU_LD_PREFIX#g" -i /qemu-runner
+RUN rustup target add x86_64-unknown-linux-musl
 WORKDIR /root/src
-RUN cargo install --force cargo-make

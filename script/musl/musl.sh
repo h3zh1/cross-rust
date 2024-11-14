@@ -30,7 +30,7 @@ main() {
     td="$(mktemp -d)"
 
     pushd "${td}"
-    curl --retry 3 -sSfL "https://github.com/richfelker/musl-cross-make/archive/${version}.tar.gz" -O
+    curl --retry 4 -sSfL "https://github.com/richfelker/musl-cross-make/archive/${version}.tar.gz" -O
     tar --strip-components=1 -xzf "${version}.tar.gz"
 
     # Don't depend on the mirrors of sabotage linux that musl-cross-make uses.
@@ -47,7 +47,7 @@ main() {
         GCC_VER=9.2.0 \
         MUSL_VER=1.2.3 \
         BINUTILS_VER=2.33.1 \
-        DL_CMD='curl --retry 3 -sSfL -C - -o' \
+        DL_CMD='curl --retry 4 -sSfL -C - -o' \
         LINUX_HEADERS_SITE="${linux_headers_site}" \
         LINUX_VER="${linux_ver}" \
         OUTPUT=/usr/local/ \

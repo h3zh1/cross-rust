@@ -1,17 +1,10 @@
-FROM ubuntu:20.04 as cross-base
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY script/common.sh script/lib.sh /
-RUN /common.sh
-
-COPY script/cmake.sh /
-RUN /cmake.sh
-
+FROM rust-base
 # gfortran-x86-64-linux-gnu is not need
 RUN apt update && apt install -y --no-install-recommends \
     g++-x86-64-linux-gnu \
-    libc6-dev-amd64-cross
+    libc6-dev-amd64-cross \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY script/deny-debian-packages.sh /
 RUN TARGET_ARCH=amd64 /deny-debian-packages.sh \
@@ -50,15 +43,5 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
     CROSS_CMAKE_OBJECT_FLAGS="-ffunction-sections -fdata-sections -fPIC -m64"
 
 RUN sed -e "s#@DEFAULT_QEMU_LD_PREFIX@#$QEMU_LD_PREFIX#g" -i /linux-runner
-FROM cross-base as build
-
-ARG TOOLCHAIN_VERSION
-ENV RUSTUP_HOME=/root/rustup
-ENV CARGO_HOME=/root/cargo
-COPY script/rust-and-xargo.sh /
-ENV PATH=$CARGO_HOME/bin:$PATH
-RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
 RUN rustup target add x86_64-unknown-linux-gnu
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src
-RUN cargo install --force cargo-make

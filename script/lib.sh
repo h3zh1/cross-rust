@@ -78,7 +78,7 @@ download_mirrors() {
     shift
 
     for mirror in "${@}"; do
-        if curl --retry 3 -sSfL "${mirror}/${relpath}/${filename}" -O; then
+        if curl --retry 4 -sSfL "${mirror}/${relpath}/${filename}" -O; then
             break
         fi
     done

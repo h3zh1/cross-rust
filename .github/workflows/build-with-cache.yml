@@ -1,4 +1,5 @@
-name: build-docker-image
+name: build-with-cache
+
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +14,11 @@ on:
       tag:
         description: 'remark'
         required: false
-        default: 'latest'
+        default: '-beta'
+      cache_tag:
+        description: 'cache-tag'
+        required: false
+        default: '-base'
 
 jobs:
   set_matrix:
@@ -34,16 +39,12 @@ jobs:
           fi
           TARGETS_JSON=$(echo "[\"${TARGETS//,/\",\"}\"]")
           echo "targets_json=$TARGETS_JSON" >> $GITHUB_OUTPUT
-  
 
   build:
-    needs: set_matrix
     runs-on: ubuntu-22.04
     continue-on-error: true
-    strategy:
-      matrix:
-        target: ${{ fromJson(needs.set_matrix.outputs.targets_json) }}
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -66,27 +67,11 @@ jobs:
       - name: Chmod +x for script
         run: chmod -R +x script/
 
-      - name: Generate image name
-        run: |
-          IMAGE_NAME=${{ matrix.target }}:${{ github.event.inputs.tool_chain_version }}
-          DOCKERFILE=$(find Dockerfiles/*/*/*${{ matrix.target }} -name 'Dockerfile.*')
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "DOCKERFILE=$DOCKERFILE" >> $GITHUB_ENV
-          
-      - name: Build (${{ matrix.target }})
-        run: |
-          docker build \
-              --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
-              --build-arg TOOLCHAIN_VERSION=${{ github.event.inputs.tool_chain_version }} \
-              -t ${{ env.IMAGE_NAME }} \
-              -f ${{ env.DOCKERFILE }} .
-
-      - name: Push to ghcr.io
-        run: |
-          docker tag ${{ env.IMAGE_NAME }} ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ env.IMAGE_NAME }}
-          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ env.IMAGE_NAME }}
-
-      - name: Push to DockerHub
-        run: |
-          docker tag ${{ env.IMAGE_NAME }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/:latest
+          cache-from: type=registry,ref=user/app:buildcache
+          cache-to: type=registry,ref=user/app:buildcache,mode=max

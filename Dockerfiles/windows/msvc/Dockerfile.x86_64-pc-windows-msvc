@@ -1,16 +1,8 @@
-FROM ubuntu:20.04 as cross-base
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY script/common.sh script/lib.sh /
-RUN /common.sh
-
-COPY script/cmake.sh /
-RUN /cmake.sh
+FROM rust-base 
 
 # run these in separate steps, so we can cache MSVC between all images.
 COPY script/windows/msvc/*.sh /
-RUN /msvc-wine.sh
+RUN /msvc-wine.sh 
 
 COPY script/windows/wine.sh /
 RUN /wine.sh
@@ -40,15 +32,5 @@ ENV CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=link.exe \
     VCINSTALLDIR="/opt/msvc/vc" \
     VSCMD_ARG_TGT_ARCH=$ARCH
 
-FROM cross-base as build
-
-ARG TOOLCHAIN_VERSION
-ENV RUSTUP_HOME=/root/rustup
-ENV CARGO_HOME=/root/cargo
-COPY script/rust-and-xargo.sh /
-ENV PATH=$CARGO_HOME/bin:$PATH
-RUN /rust-and-xargo.sh ${TOOLCHAIN_VERSION}
-RUN rustup target add x86_64-pc-windows-msvc
-RUN apt clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 WORKDIR /root/src
-RUN cargo install --force cargo-make
+RUN rustup target add x86_64-pc-windows-msvc
