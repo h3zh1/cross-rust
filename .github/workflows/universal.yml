@@ -2,10 +2,6 @@ name: build-universal
 on:
   workflow_dispatch:
     inputs:
-      targets:
-        description: 'Targets to build'
-        required: true
-        default: 'all'
       tool_chain_version:
         description: 'Tool chain version'
         required: false
@@ -14,10 +10,6 @@ on:
         description: 'remark'
         required: false
         default: '-beta'
-      is_free_disk_space:
-        description: 'is_free_disk_space'
-        required: false
-        default: 'false'
 
 jobs:
   build:
