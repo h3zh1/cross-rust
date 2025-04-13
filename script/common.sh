@@ -24,20 +24,10 @@ install_packages \
     gcc \
     git \
     libtool \
-    m4 \
     make \
-    protobuf-compiler
-
-if_centos install_packages \
-    clang-devel \
-    gcc-c++ \
-    gcc-gfortran \
-    glibc-devel \
-    pkgconfig
-
-if_ubuntu install_packages \
-    g++ \
-    gfortran \
+    m4 \
+    cmake \
+    protobuf-compiler \
     libc6-dev \
     libclang-dev \
     pkg-config
